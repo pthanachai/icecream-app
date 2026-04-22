@@ -172,14 +172,6 @@
       text-align: center;
       background: #fff;
     }
-    .history-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
     @media (max-width: 640px) {
       .title { font-size: 28px; }
       .stat-value { font-size: 24px; }
@@ -224,7 +216,18 @@
 
         <input id="cash" class="input" type="number" placeholder="ลูกค้าจ่าย เช่น 100" oninput="renderAll()" />
 
+        <div style="margin-top:12px;">
+          <label for="paymentMethod"><strong>วิธีชำระเงิน</strong></label>
+          <select id="paymentMethod" class="input" onchange="renderAll()">
+            <option value="เงินสด">เงินสด</option>
+            <option value="โอนเงิน">โอนเงิน</option>
+            <option value="พร้อมเพย์">พร้อมเพย์</option>
+            <option value="QR Code">QR Code</option>
+          </select>
+        </div>
+
         <div class="money-box">
+          <div>วิธีจ่าย: <strong id="paymentMethodShow">เงินสด</strong></div>
           <div>ลูกค้าจ่าย: <strong id="cashShow">0</strong> บาท</div>
           <div class="money-big">เงินทอน: <span id="change">0</span> บาท</div>
           <div id="notEnough" class="warn" style="display:none;">เงินที่ลูกค้าจ่ายยังไม่พอ</div>
@@ -248,9 +251,8 @@
       </div>
 
       <div class="card">
-        <div class="history-top">
-          <h2 style="margin:0;">ประวัติที่ขายแล้ว</h2>
-        </div>
+        <h2>ประวัติที่ขายแล้ว</h2>
+        <button class="danger-btn" onclick="clearHistory()">ลบประวัติทั้งหมด</button>
         <div id="history"></div>
       </div>
     </div>
@@ -371,12 +373,10 @@
         ).join('');
 
         div.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-            <div class="history-name">บิล ${bill.billNo}</div>
-            <button class="danger-btn" onclick="deleteBill(${bill.billNo})">ลบบิลนี้</button>
-          </div>
+          <div class="history-name">บิล ${bill.billNo}</div>
           ${itemsHtml}
           <div style="margin-top:8px;"><strong>รวม ${formatNumber(bill.total)} บาท</strong></div>
+          <div class="muted">วิธีจ่าย ${bill.paymentMethod || '-'} </div>
           <div class="muted">รับเงิน ${formatNumber(bill.cash)} บาท | ทอน ${formatNumber(bill.change)} บาท</div>
           <div class="small">${bill.createdAt}</div>
         `;
@@ -402,6 +402,7 @@
 
       document.getElementById('currentQty').innerText = formatNumber(qty);
       document.getElementById('currentTotal').innerText = formatNumber(total);
+      document.getElementById('paymentMethodShow').innerText = document.getElementById('paymentMethod').value;
       document.getElementById('cashShow').innerText = formatNumber(cash);
       document.getElementById('change').innerText = formatNumber(change > 0 ? change : 0);
       document.getElementById('notEnough').style.display = cash > 0 && cash < total ? 'block' : 'none';
@@ -421,15 +422,12 @@
         return;
       }
 
-      const nextBillNo = sales.length > 0
-        ? Math.max(...sales.map(b => b.billNo || 0)) + 1
-        : 1;
-
       const bill = {
-        billNo: nextBillNo,
+        billNo: sales.length + 1,
         items: currentOrder.map((item) => ({ ...item })),
         total,
         cash,
+        paymentMethod: document.getElementById('paymentMethod').value,
         change: cash - total,
         createdAt: new Date().toLocaleString('th-TH'),
       };
@@ -437,6 +435,7 @@
       sales.push(bill);
       currentOrder = [];
       document.getElementById('cash').value = '';
+      document.getElementById('paymentMethod').value = 'เงินสด';
       saveData();
       renderAll();
     }
@@ -444,13 +443,14 @@
     function resetOrder() {
       currentOrder = [];
       document.getElementById('cash').value = '';
+      document.getElementById('paymentMethod').value = 'เงินสด';
       saveData();
       renderAll();
     }
 
-    function deleteBill(billNo) {
-      if (!confirm('ต้องการลบบิลนี้ใช่ไหม?')) return;
-      sales = sales.filter((bill) => bill.billNo !== billNo);
+    function clearHistory() {
+      if (!confirm('ต้องการลบประวัติทั้งหมดใช่ไหม?')) return;
+      sales = [];
       saveData();
       renderAll();
     }
