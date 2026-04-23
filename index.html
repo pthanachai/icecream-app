@@ -8,6 +8,7 @@
 <style>
 body { font-family: Arial; margin:0; background:#f2f6f9;}
 .container { padding:15px; max-width:1000px; margin:auto;}
+
 .tabs button {
   padding:8px 15px;
   border:none;
@@ -15,6 +16,7 @@ body { font-family: Arial; margin:0; background:#f2f6f9;}
   margin-right:5px;
   cursor:pointer;
 }
+
 .product {
   display:inline-block;
   width:45%;
@@ -24,9 +26,28 @@ body { font-family: Arial; margin:0; background:#f2f6f9;}
   border-radius:12px;
   cursor:pointer;
 }
+
 .cart { background:white; padding:10px; border-radius:10px;}
+
 button { padding:10px; margin:5px; border:none; border-radius:10px;}
-#printArea { display:none; }
+
+/* 🧾 print */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receiptArea, #receiptArea * {
+    visibility: visible;
+  }
+
+  #receiptArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+  }
+}
 </style>
 
 </head>
@@ -34,7 +55,7 @@ button { padding:10px; margin:5px; border:none; border-radius:10px;}
 <body>
 <div class="container">
 
-<h2>กดขาย</h2>
+<h2>WE DRINK POS</h2>
 
 <div class="tabs">
   <button onclick="setCategory('ไอศกรีม')">ไอศกรีม</button>
@@ -68,15 +89,15 @@ button { padding:10px; margin:5px; border:none; border-radius:10px;}
 
 </div>
 
-<!-- 🧾 พื้นที่ปริ้น -->
-<div id="printArea"></div>
+<!-- 🧾 ใบเสร็จ -->
+<div id="receiptArea"></div>
 
 <script>
 
 // 🔢 เลขบิล
 let billNo = localStorage.getItem("billNo") || 1;
 
-// 💾 ข้อมูลขาย
+// 💾 ข้อมูล
 let sales = JSON.parse(localStorage.getItem("sales")) || [];
 
 let products = [
@@ -182,23 +203,22 @@ function checkout(print){
   renderHistory();
 }
 
-// 🖨️ ปริ้นเฉพาะข้อมูลบิล
+// 🖨️ ปริ้นในหน้าเว็บ
 function printBill(sale){
   let itemsText = sale.items.map(i => i.name).join("<br>");
 
   let html = `
-    <div style="font-size:18px">
+    <div style="padding:10px; font-size:16px">
+      <center><b>WE DRINK</b></center>
       <p>1. เลขบิล: ${sale.bill}</p>
       <p>2. เวลา: ${sale.date}</p>
       <p>3. รายการ:<br>${itemsText}</p>
-      <p>4. รวม: ${sale.total} บาท</p>
+      <p><b>4. รวม: ${sale.total} บาท</b></p>
     </div>
   `;
 
-  let printWindow = window.open('', '', 'width=300,height=600');
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.print();
+  document.getElementById("receiptArea").innerHTML = html;
+  window.print();
 }
 
 // 📜 ประวัติ
