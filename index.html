@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>แอปขายไอติม</title>
+  <title>แอปขายไอศกรีมและน้ำ</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -13,14 +13,14 @@
       color: #0f172a;
     }
     .container {
-      max-width: 980px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 20px;
     }
     .title {
       text-align: center;
       margin-bottom: 8px;
-      font-size: 36px;
+      font-size: 34px;
     }
     .subtitle {
       text-align: center;
@@ -35,7 +35,7 @@
     }
     .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 18px;
       margin-bottom: 18px;
     }
@@ -46,9 +46,8 @@
       padding: 18px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.06);
     }
-    .card h2 {
+    .card h2, .card h3 {
       margin-top: 0;
-      font-size: 22px;
     }
     .stat-label {
       color: #64748b;
@@ -58,6 +57,25 @@
     .stat-value {
       font-size: 30px;
       font-weight: bold;
+    }
+    .category-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tab-btn {
+      border: 1px solid #cbd5e1;
+      background: white;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab-btn.active {
+      background: #0ea5e9;
+      color: white;
+      border-color: #0ea5e9;
     }
     .product-grid {
       display: grid;
@@ -80,20 +98,18 @@
       margin-top: 6px;
       font-size: 15px;
     }
-    .order-item, .history-item {
+    .order-item, .history-item, .menu-item {
       border: 1px solid #e2e8f0;
       border-radius: 14px;
       padding: 12px;
       margin-bottom: 10px;
       background: #fff;
     }
-    .order-name, .history-name {
+    .order-name, .history-name, .menu-name {
       font-weight: bold;
       margin-bottom: 6px;
     }
-    .muted {
-      color: #64748b;
-    }
+    .muted { color: #64748b; }
     .small {
       color: #94a3b8;
       font-size: 12px;
@@ -104,12 +120,13 @@
       gap: 8px;
       flex-wrap: wrap;
       margin-top: 8px;
+      align-items: center;
     }
-    .mini-btn, .action-btn, .ghost-btn, .danger-btn {
+    .mini-btn, .action-btn, .ghost-btn, .danger-btn, .edit-btn {
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
     }
     .mini-btn {
       padding: 8px 12px;
@@ -120,13 +137,19 @@
       background: #fff1f2;
       border: 1px solid #fecaca;
     }
-    .input {
+    .edit-btn {
+      padding: 8px 12px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+    }
+    .input, .select {
       width: 100%;
       padding: 12px 14px;
       border-radius: 12px;
       border: 1px solid #cbd5e1;
       font-size: 16px;
       margin-top: 8px;
+      background: white;
     }
     .action-grid {
       display: grid;
@@ -172,17 +195,29 @@
       text-align: center;
       background: #fff;
     }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .inline-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
     @media (max-width: 640px) {
       .title { font-size: 28px; }
       .stat-value { font-size: 24px; }
       .money-big { font-size: 22px; }
+      .inline-two, .action-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 class="title">แอปขายไอติม 🍦</h1>
-    <div class="subtitle">กดขาย คิดเงิน ทอนเงิน ปิดบิล แล้วเริ่มลูกค้าคนใหม่ได้ทันที</div>
+    <h1 class="title">แอปขายไอศกรีมและน้ำ 🍦🥤</h1>
+    <div class="subtitle">กดขาย คิดเงิน ทอนเงิน ปิดบิล จัดการเมนู แก้ราคา และแยกหมวดสินค้าได้</div>
 
     <div class="grid-3">
       <div class="card">
@@ -202,6 +237,7 @@
     <div class="grid-2">
       <div class="card">
         <h2>กดขาย</h2>
+        <div class="category-tabs" id="categoryTabs"></div>
         <div class="product-grid" id="products"></div>
       </div>
 
@@ -218,7 +254,7 @@
 
         <div style="margin-top:12px;">
           <label for="paymentMethod"><strong>วิธีชำระเงิน</strong></label>
-          <select id="paymentMethod" class="input" onchange="renderAll()">
+          <select id="paymentMethod" class="select" onchange="renderAll()">
             <option value="เงินสด">เงินสด</option>
             <option value="โอนเงิน">โอนเงิน</option>
             <option value="พร้อมเพย์">พร้อมเพย์</option>
@@ -245,17 +281,34 @@
 
     <div class="grid-2">
       <div class="card">
-        <h2>เพิ่มสินค้าใหม่</h2>
-        <input id="newName" class="input" type="text" placeholder="เช่น ไอติมกะทิ" />
-        <input id="newPrice" class="input" type="number" placeholder="ราคา เช่น 20" />
+        <h2>จัดการเมนูสินค้า</h2>
+        <div class="inline-two">
+          <div>
+            <label><strong>หมวดสินค้า</strong></label>
+            <select id="newCategory" class="select">
+              <option value="ไอศกรีม">ไอศกรีม</option>
+              <option value="น้ำ">น้ำ</option>
+            </select>
+          </div>
+          <div>
+            <label><strong>ราคา</strong></label>
+            <input id="newPrice" class="input" type="number" placeholder="ราคา เช่น 20" />
+          </div>
+        </div>
+        <div>
+          <label><strong>ชื่อสินค้า</strong></label>
+          <input id="newName" class="input" type="text" placeholder="เช่น น้ำเปล่า / ไอศกรีมกะทิ" />
+        </div>
         <div style="margin-top:12px;">
           <button class="ghost-btn" onclick="addProduct()">เพิ่มสินค้า</button>
         </div>
+
+        <h3 style="margin-top:20px;">รายการเมนูทั้งหมด</h3>
+        <div class="menu-grid" id="menuList"></div>
       </div>
 
       <div class="card">
         <h2>ประวัติที่ขายแล้ว</h2>
-        <button class="danger-btn" onclick="clearHistory()">ลบประวัติทั้งหมด</button>
         <div id="history"></div>
       </div>
     </div>
@@ -263,32 +316,65 @@
 
   <script>
     const defaultProducts = [
-      { id: 1, name: 'ไอติมโคน รสนม', price: 20 },
-      { id: 2, name: 'ไอติมโคน รสมัทฉะ', price: 20 },
-      { id: 3, name: 'ไอติมถ้วยเล็ก รสนม', price: 35 },
-      { id: 4, name: 'ไอติมถ้วยเล็ก รสมัทฉะ', price: 35 },
-      { id: 5, name: 'ไอติมถ้วยใหญ่ รสนม', price: 45 },
-      { id: 6, name: 'ไอติมถ้วยใหญ่ รสสตรอว์เบอร์รี่', price: 45 },
+      { id: 1, category: 'ไอศกรีม', name: 'ไอศกรีมโคน รสนม', price: 15 },
+      { id: 2, category: 'ไอศกรีม', name: 'ไอศกรีมโคน รสสตรอว์เบอร์รี่', price: 15 },
+      { id: 3, category: 'ไอศกรีม', name: 'ไอศกรีมถ้วยเล็ก รสนม', price: 25 },
+      { id: 4, category: 'ไอศกรีม', name: 'ไอศกรีมถ้วยใหญ่ รสนม', price: 35 },
+      { id: 5, category: 'น้ำ', name: 'น้ำเปล่า', price: 10 },
+      { id: 6, category: 'น้ำ', name: 'น้ำอัดลม', price: 20 }
     ];
 
     let products = JSON.parse(localStorage.getItem('icecream_products') || 'null') || defaultProducts;
     let currentOrder = JSON.parse(localStorage.getItem('icecream_current_order') || '[]');
     let sales = JSON.parse(localStorage.getItem('icecream_sales') || '[]');
+    let selectedCategory = localStorage.getItem('icecream_selected_category') || 'ไอศกรีม';
 
     function saveData() {
       localStorage.setItem('icecream_products', JSON.stringify(products));
       localStorage.setItem('icecream_current_order', JSON.stringify(currentOrder));
       localStorage.setItem('icecream_sales', JSON.stringify(sales));
+      localStorage.setItem('icecream_selected_category', selectedCategory);
     }
 
     function formatNumber(num) {
       return Number(num || 0).toLocaleString('th-TH');
     }
 
+    function getCategories() {
+      const categories = [...new Set(products.map(p => p.category))];
+      return categories.length ? categories : ['ไอศกรีม', 'น้ำ'];
+    }
+
+    function renderCategoryTabs() {
+      const el = document.getElementById('categoryTabs');
+      el.innerHTML = '';
+      const categories = getCategories();
+      if (!categories.includes(selectedCategory)) selectedCategory = categories[0];
+
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${cat === selectedCategory ? 'active' : ''}`;
+        btn.innerText = cat;
+        btn.onclick = () => {
+          selectedCategory = cat;
+          saveData();
+          renderAll();
+        };
+        el.appendChild(btn);
+      });
+    }
+
     function renderProducts() {
       const el = document.getElementById('products');
       el.innerHTML = '';
-      products.forEach((p) => {
+      const filtered = products.filter(p => p.category === selectedCategory);
+
+      if (filtered.length === 0) {
+        el.innerHTML = '<div class="empty">ยังไม่มีสินค้าในหมวดนี้</div>';
+        return;
+      }
+
+      filtered.forEach((p) => {
         const btn = document.createElement('button');
         btn.className = 'product-btn';
         btn.innerHTML = `${p.name}<span class="product-price">+${formatNumber(p.price)} บาท</span>`;
@@ -305,6 +391,7 @@
       } else {
         currentOrder.push({
           productId: product.id,
+          category: product.category,
           name: product.name,
           price: product.price,
           qty: 1,
@@ -348,6 +435,7 @@
         div.className = 'order-item';
         div.innerHTML = `
           <div class="order-name">${item.name}</div>
+          <div class="muted">หมวด: ${item.category}</div>
           <div class="muted">${formatNumber(item.qty)} ชิ้น = ${formatNumber(item.total)} บาท</div>
           <div class="row">
             <button class="mini-btn" onclick="increaseItem(${item.productId})">+1</button>
@@ -356,6 +444,84 @@
         `;
         el.appendChild(div);
       });
+    }
+
+    function renderMenuList() {
+      const el = document.getElementById('menuList');
+      el.innerHTML = '';
+
+      if (products.length === 0) {
+        el.innerHTML = '<div class="empty">ยังไม่มีสินค้า</div>';
+        return;
+      }
+
+      products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+          <div class="menu-name">${product.name}</div>
+          <div class="muted">หมวด: ${product.category}</div>
+          <div class="muted">ราคา: ${formatNumber(product.price)} บาท</div>
+          <div class="row">
+            <button class="edit-btn" onclick="editProduct(${product.id})">แก้ไข</button>
+            <button class="danger-btn" onclick="deleteProduct(${product.id})">ลบเมนู</button>
+          </div>
+        `;
+        el.appendChild(div);
+      });
+    }
+
+    function editProduct(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      const newName = prompt('แก้ชื่อสินค้า', product.name);
+      if (newName === null) return;
+      const trimmedName = newName.trim();
+      if (!trimmedName) {
+        alert('ชื่อสินค้าห้ามว่าง');
+        return;
+      }
+
+      const newPriceText = prompt('แก้ราคา', product.price);
+      if (newPriceText === null) return;
+      const newPrice = Number(newPriceText);
+      if (!newPrice || newPrice <= 0) {
+        alert('ราคาต้องมากกว่า 0');
+        return;
+      }
+
+      const newCategory = prompt('แก้หมวดสินค้า (ไอศกรีม หรือ น้ำ)', product.category);
+      if (newCategory === null) return;
+      const trimmedCategory = newCategory.trim();
+      if (!trimmedCategory) {
+        alert('หมวดสินค้าห้ามว่าง');
+        return;
+      }
+
+      product.name = trimmedName;
+      product.price = newPrice;
+      product.category = trimmedCategory;
+
+      currentOrder = currentOrder.map(item => item.productId === productId
+        ? { ...item, name: trimmedName, price: newPrice, category: trimmedCategory, total: item.qty * newPrice }
+        : item
+      );
+
+      saveData();
+      renderAll();
+    }
+
+    function deleteProduct(productId) {
+      const usedInOrder = currentOrder.some(item => item.productId === productId);
+      if (usedInOrder) {
+        alert('ลบไม่ได้ เพราะสินค้านี้อยู่ในบิลปัจจุบัน');
+        return;
+      }
+      if (!confirm('ต้องการลบเมนูนี้ใช่ไหม?')) return;
+      products = products.filter(p => p.id !== productId);
+      saveData();
+      renderAll();
     }
 
     function renderHistory() {
@@ -372,14 +538,14 @@
         div.className = 'history-item';
 
         const itemsHtml = bill.items.map((item) =>
-          `<div class="muted">• ${item.name} x${formatNumber(item.qty)} = ${formatNumber(item.total)} บาท</div>`
+          `<div class="muted">• [${item.category || '-'}] ${item.name} x${formatNumber(item.qty)} = ${formatNumber(item.total)} บาท</div>`
         ).join('');
 
         div.innerHTML = `
           <div class="history-name">บิล ${bill.billNo}</div>
           ${itemsHtml}
           <div style="margin-top:8px;"><strong>รวม ${formatNumber(bill.total)} บาท</strong></div>
-          <div class="muted">วิธีจ่าย ${bill.paymentMethod || '-'} </div>
+          <div class="muted">วิธีจ่าย ${bill.paymentMethod || '-'}</div>
           <div class="muted">รับเงิน ${formatNumber(bill.cash)} บาท | ทอน ${formatNumber(bill.change)} บาท</div>
           <div class="small">${bill.createdAt}</div>
         `;
@@ -410,7 +576,7 @@
       document.getElementById('cashShow').innerText = formatNumber(paymentMethod === 'เงินสด' ? cash : total);
       document.getElementById('change').innerText = formatNumber(paymentMethod === 'เงินสด' ? (change > 0 ? change : 0) : 0);
       document.getElementById('notEnough').style.display = paymentMethod === 'เงินสด' && cash > 0 && cash < total ? 'block' : 'none';
-      document.getElementById('cash').style.display = paymentMethod === 'เงินสด' ? 'block' : 'none';
+      document.getElementById('cash').style.display = paymentMethod === 'เงินสด' ? 'block' : 'block';
     }
 
     function printBill(bill) {
@@ -439,7 +605,7 @@
         </head>
         <body>
           <div class="center">
-            <h2 style="margin:0;">แอปขายไอติม</h2>
+            <h2 style="margin:0;">แอปขายไอศกรีมและน้ำ</h2>
             <div>ใบเสร็จรับเงิน</div>
           </div>
           <div class="line"></div>
@@ -466,9 +632,7 @@
           <div class="line"></div>
           <div class="center">ขอบคุณที่อุดหนุน</div>
           <script>
-            window.onload = function() {
-              window.print();
-            };
+            window.onload = function() { window.print(); };
           <\/script>
         </body>
         </html>
@@ -492,7 +656,7 @@
       }
 
       const bill = {
-        billNo: sales.length + 1,
+        billNo: sales.length > 0 ? Math.max(...sales.map(b => b.billNo || 0)) + 1 : 1,
         items: currentOrder.map((item) => ({ ...item })),
         total,
         cash: paymentMethod === 'เงินสด' ? cash : total,
@@ -508,9 +672,7 @@
       saveData();
       renderAll();
 
-      if (shouldPrint) {
-        printBill(bill);
-      }
+      if (shouldPrint) printBill(bill);
     }
 
     function resetOrder() {
@@ -521,32 +683,28 @@
       renderAll();
     }
 
-    function clearHistory() {
-      if (!confirm('ต้องการลบประวัติทั้งหมดใช่ไหม?')) return;
-      sales = [];
-      saveData();
-      renderAll();
-    }
-
     function addProduct() {
       const name = document.getElementById('newName').value.trim();
       const price = Number(document.getElementById('newPrice').value || 0);
+      const category = document.getElementById('newCategory').value;
 
       if (!name || price <= 0) {
         alert('กรอกชื่อสินค้าและราคาให้ถูกต้อง');
         return;
       }
 
-      products.push({ id: Date.now(), name, price });
+      products.push({ id: Date.now(), category, name, price });
       document.getElementById('newName').value = '';
       document.getElementById('newPrice').value = '';
       saveData();
-      renderProducts();
+      renderAll();
     }
 
     function renderAll() {
+      renderCategoryTabs();
       renderProducts();
       renderOrder();
+      renderMenuList();
       renderHistory();
       renderSummary();
       renderMoney();
