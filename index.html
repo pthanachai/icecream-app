@@ -49,7 +49,6 @@ button { padding:10px; margin:5px; border:none; border-radius:10px;}
   }
 }
 </style>
-
 </head>
 
 <body>
@@ -97,7 +96,7 @@ button { padding:10px; margin:5px; border:none; border-radius:10px;}
 // 🔢 เลขบิล
 let billNo = localStorage.getItem("billNo") || 1;
 
-// 💾 ข้อมูล
+// 💾 ข้อมูลขาย
 let sales = JSON.parse(localStorage.getItem("sales")) || [];
 
 let products = [
@@ -208,17 +207,20 @@ function checkout(print){
   renderHistory();
 }
 
-// 🖨️ ปริ้นในหน้าเว็บ
+// 🖨️ ปริ้น
 function printBill(sale){
   let itemsText = sale.items.map(i => i.name).join("<br>");
 
   let html = `
     <div style="padding:10px; font-size:16px">
       <center><b>WE DRINK</b></center>
-      <p>1. เลขบิล: ${sale.bill}</p>
-      <p>2. เวลา: ${sale.date}</p>
-      <p>3. รายการ:<br>${itemsText}</p>
-      <p><b>4. รวม: ${sale.total} บาท</b></p>
+      <p>เลขบิล: ${sale.bill}</p>
+      <p>เวลา: ${sale.date}</p>
+      <p>รายการ:<br>${itemsText}</p>
+      <p>รวม: ${sale.total} บาท</p>
+      <p>รับเงิน: ${sale.cash} บาท</p>
+      <p>ทอน: ${sale.cash - sale.total} บาท</p>
+      <p>วิธีจ่าย: ${sale.payment}</p>
     </div>
   `;
 
@@ -229,12 +231,17 @@ function printBill(sale){
 // 📜 ประวัติ
 function renderHistory(){
   let html="";
+
   sales.forEach((s,index)=>{
     html+=`
-    บิล ${s.bill} | ${s.total} บาท 
-    <button onclick="deleteSale(${index})">ลบ</button><br>
+    บิล ${s.bill} | ${s.date}<br>
+    รวม ${s.total} บาท | รับ ${s.cash} บาท | ทอน ${s.cash - s.total} บาท<br>
+    วิธีจ่าย: ${s.payment}
+    <button onclick="deleteSale(${index})">ลบ</button>
+    <hr>
     `;
   });
+
   document.getElementById("history").innerHTML=html;
 }
 
