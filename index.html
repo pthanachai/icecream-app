@@ -178,13 +178,18 @@ function checkout(print){
   if(cart.length==0) return alert("ไม่มีรายการ");
 
   let total = cart.reduce((a,b)=>a+b.price,0);
+  let cash = Number(document.getElementById("cash").value||0);
+  let payment = document.getElementById("payment").value;
+
   let billId = String(billNo).padStart(4,'0');
 
   let sale = {
     bill: billId,
     date: new Date().toLocaleString(),
     items: cart,
-    total: total
+    total: total,
+    cash: cash,
+    payment: payment
   };
 
   sales.push(sale);
