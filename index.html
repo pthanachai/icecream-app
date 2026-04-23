@@ -8,8 +8,6 @@
 <style>
 body { font-family: Arial; margin:0; background:#f2f6f9;}
 .container { padding:15px; max-width:1000px; margin:auto;}
-h2 { margin:10px 0; }
-
 .tabs button {
   padding:8px 15px;
   border:none;
@@ -18,20 +16,17 @@ h2 { margin:10px 0; }
   cursor:pointer;
 }
 .active { background:#2196f3; color:white;}
-
 .product {
   display:inline-block;
   width:45%;
   margin:5px;
-  padding:10px;
+  padding:12px;
   background:#e6eef5;
   border-radius:12px;
   cursor:pointer;
 }
-
-.cart { background:white; padding:10px; border-radius:10px; margin-top:10px;}
-
-button { padding:10px; margin:5px; border:none; border-radius:10px; cursor:pointer;}
+.cart { background:white; padding:10px; border-radius:10px;}
+button { padding:10px; margin:5px; border:none; border-radius:10px;}
 </style>
 
 </head>
@@ -42,8 +37,8 @@ button { padding:10px; margin:5px; border:none; border-radius:10px; cursor:point
 <h2>กดขาย</h2>
 
 <div class="tabs">
-  <button onclick="setCategory('ไอศกรีม')" id="tab-ไอศกรีม">ไอศกรีม</button>
-  <button onclick="setCategory('น้ำ')" id="tab-น้ำ">น้ำ</button>
+  <button onclick="setCategory('ไอศกรีม')">ไอศกรีม</button>
+  <button onclick="setCategory('น้ำ')">น้ำ</button>
 </div>
 
 <div id="products"></div>
@@ -65,15 +60,20 @@ button { padding:10px; margin:5px; border:none; border-radius:10px; cursor:point
 </select>
 
 <br>
-<button onclick="checkout(false)">ปิดบิล</button>
-<button onclick="checkout(true)">ปิดบิล + พิมพ์</button>
+<button onclick="checkout()">ปิดบิล</button>
+<button onclick="printReceipt()">พิมพ์ใบเสร็จ</button>
+
+<h2>ยอดขายทั้งหมด</h2>
+<p id="todayTotal">0</p>
+
+<h2>ประวัติ</h2>
+<div id="history"></div>
 
 </div>
 
 <script>
 
-// 🔥 ใส่ลิงก์ของแบมตรงนี้
-const API_URL = "https://script.google.com/macros/s/AKfycbw0Z4ozuLtUPm_GvDw2yOVww0tOrEzslYeRpY6Q-1aWKB7g61yBJLGFKNonnqbsP5OKqw/exec";
+let sales = JSON.parse(localStorage.getItem("sales")) || [];
 
 let products = [
   { name: "ไอติมโคน รสนม", price: 20, category: "ไอศกรีม" },
@@ -90,8 +90,7 @@ let products = [
   { name: "ไอติมสตอเบอรรี่แก้วใหญ่", price: 45, category: "ไอศกรีม" },
   { name: "ไอติมช็อคโกเเลตแก้วเล็ก", price: 35, category: "ไอศกรีม" },
   { name: "ไอติมช็อคโกเเลตแก้วใหญ่", price: 45, category: "ไอศกรีม" },
-  
-  
+
   { name: "มะนาว", price: 30, category: "น้ำ" },
   { name: "เสาวรส", price: 30, category: "น้ำ" },
   { name: "เชอรี่", price: 45, category: "น้ำ" },
@@ -99,7 +98,7 @@ let products = [
   { name: "ชาองุ่น 6 ลูกครีมชีส", price: 60, category: "น้ำ" },
   { name: "น้ำส้ม", price: 30, category: "น้ำ" },
   { name: "ชามะนาวองุ่น", price: 35, category: "น้ำ" },
-  { name: "ชาบลูเบอรรี่", price: 40, category: "น้ำ" },
+  { name: "ชาบลูเบอรรี่", price: 40, category: "น้ำ" }
 ];
 
 let currentCategory = "ไอศกรีม";
@@ -113,12 +112,11 @@ function setCategory(cat){
 function renderProducts(){
   let html="";
   products.filter(p=>p.category===currentCategory).forEach(p=>{
-    html+=`
-      <div class="product" onclick="add('${p.name}',${p.price})">
-        ${p.name}<br>+${p.price} บาท
-      </div>`;
+    html+=`<div class="product" onclick="add('${p.name}',${p.price})">
+      ${p.name}<br>${p.price} บาท
+    </div>`;
   });
-  document.getElementById("products").innerHTML = html;
+  document.getElementById("products").innerHTML=html;
 }
 
 function add(name,price){
@@ -136,8 +134,8 @@ function renderCart(){
     total+=i.price;
   });
 
-  document.getElementById("cart").innerHTML = html;
-  document.getElementById("total").innerText = total;
+  document.getElementById("cart").innerHTML=html;
+  document.getElementById("total").innerText=total;
 
   let cash = Number(document.getElementById("cash").value||0);
   document.getElementById("change").innerText = cash-total;
@@ -150,35 +148,55 @@ function removeItem(i){
 
 document.getElementById("cash").addEventListener("input",renderCart);
 
-function checkout(print){
+function checkout(){
   if(cart.length==0) return alert("ไม่มีรายการ");
 
   let total = cart.reduce((a,b)=>a+b.price,0);
-  let items = cart.map(i=>i.name).join(",");
   let payment = document.getElementById("payment").value;
 
-  // 🔥 ส่งเข้า Google Sheet
-  fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      items: items,
-      total: total,
-      payment: payment
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
+  sales.push({
+    date: new Date().toLocaleString(),
+    items: cart,
+    total: total,
+    payment: payment
   });
 
-  if(print) window.print();
+  localStorage.setItem("sales", JSON.stringify(sales));
 
   alert("บันทึกแล้ว");
+
   cart=[];
   document.getElementById("cash").value="";
   renderCart();
+  renderHistory();
+}
+
+function renderHistory(){
+  let html="";
+  let total=0;
+
+  sales.forEach((s,index)=>{
+    html+=`${s.date} | ${s.total} บาท (${s.payment}) 
+    <button onclick="deleteSale(${index})">ลบ</button><br>`;
+    total += s.total;
+  });
+
+  document.getElementById("history").innerHTML=html;
+  document.getElementById("todayTotal").innerText=total;
+}
+
+function deleteSale(i){
+  sales.splice(i,1);
+  localStorage.setItem("sales", JSON.stringify(sales));
+  renderHistory();
+}
+
+function printReceipt(){
+  window.print();
 }
 
 renderProducts();
+renderHistory();
 
 </script>
 
