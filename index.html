@@ -15,7 +15,6 @@ body { font-family: Arial; margin:0; background:#f2f6f9;}
   margin-right:5px;
   cursor:pointer;
 }
-.active { background:#2196f3; color:white;}
 .product {
   display:inline-block;
   width:45%;
@@ -27,6 +26,7 @@ body { font-family: Arial; margin:0; background:#f2f6f9;}
 }
 .cart { background:white; padding:10px; border-radius:10px;}
 button { padding:10px; margin:5px; border:none; border-radius:10px;}
+#printArea { display:none; }
 </style>
 
 </head>
@@ -60,19 +60,23 @@ button { padding:10px; margin:5px; border:none; border-radius:10px;}
 </select>
 
 <br>
-<button onclick="checkout()">ปิดบิล</button>
-<button onclick="printReceipt()">พิมพ์ใบเสร็จ</button>
-
-<h2>ยอดขายทั้งหมด</h2>
-<p id="todayTotal">0</p>
+<button onclick="checkout(false)">ปิดบิล</button>
+<button onclick="checkout(true)">ปิดบิล + พิมพ์</button>
 
 <h2>ประวัติ</h2>
 <div id="history"></div>
 
 </div>
 
+<!-- 🧾 พื้นที่ปริ้น -->
+<div id="printArea"></div>
+
 <script>
 
+// 🔢 เลขบิล
+let billNo = localStorage.getItem("billNo") || 1;
+
+// 💾 ข้อมูลขาย
 let sales = JSON.parse(localStorage.getItem("sales")) || [];
 
 let products = [
@@ -148,22 +152,29 @@ function removeItem(i){
 
 document.getElementById("cash").addEventListener("input",renderCart);
 
-function checkout(){
+// 🧾 ปิดบิล
+function checkout(print){
   if(cart.length==0) return alert("ไม่มีรายการ");
 
   let total = cart.reduce((a,b)=>a+b.price,0);
-  let payment = document.getElementById("payment").value;
+  let billId = String(billNo).padStart(4,'0');
 
-  sales.push({
+  let sale = {
+    bill: billId,
     date: new Date().toLocaleString(),
     items: cart,
-    total: total,
-    payment: payment
-  });
+    total: total
+  };
 
+  sales.push(sale);
   localStorage.setItem("sales", JSON.stringify(sales));
 
-  alert("บันทึกแล้ว");
+  billNo++;
+  localStorage.setItem("billNo", billNo);
+
+  if(print) printBill(sale);
+
+  alert("บันทึกแล้ว บิล: " + billId);
 
   cart=[];
   document.getElementById("cash").value="";
@@ -171,28 +182,41 @@ function checkout(){
   renderHistory();
 }
 
+// 🖨️ ปริ้นเฉพาะข้อมูลบิล
+function printBill(sale){
+  let itemsText = sale.items.map(i => i.name).join("<br>");
+
+  let html = `
+    <div style="font-size:18px">
+      <p>1. เลขบิล: ${sale.bill}</p>
+      <p>2. เวลา: ${sale.date}</p>
+      <p>3. รายการ:<br>${itemsText}</p>
+      <p>4. รวม: ${sale.total} บาท</p>
+    </div>
+  `;
+
+  let printWindow = window.open('', '', 'width=300,height=600');
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// 📜 ประวัติ
 function renderHistory(){
   let html="";
-  let total=0;
-
   sales.forEach((s,index)=>{
-    html+=`${s.date} | ${s.total} บาท (${s.payment}) 
-    <button onclick="deleteSale(${index})">ลบ</button><br>`;
-    total += s.total;
+    html+=`
+    บิล ${s.bill} | ${s.total} บาท 
+    <button onclick="deleteSale(${index})">ลบ</button><br>
+    `;
   });
-
   document.getElementById("history").innerHTML=html;
-  document.getElementById("todayTotal").innerText=total;
 }
 
 function deleteSale(i){
   sales.splice(i,1);
   localStorage.setItem("sales", JSON.stringify(sales));
   renderHistory();
-}
-
-function printReceipt(){
-  window.print();
 }
 
 renderProducts();
